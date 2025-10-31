@@ -40,10 +40,13 @@ Additional Comments:
 //
 template<typename T> class wave_trace : public uvm::uvm_component {
 public:
-    UVM_COMPONENT_UTILS(wave_trace);
 
     T* uut;
     VerilatedFstSc* tfp;
+    std::string uvmtest_name;
+
+    UVM_COMPONENT_UTILS(wave_trace);
+
 
     wave_trace(uvm::uvm_component_name name= "wave", T* uut=NULL) : uvm::uvm_component(name), 
     uut(uut) {}
@@ -51,6 +54,11 @@ public:
     virtual void build_phase(uvm::uvm_phase& phase){
       uvm::uvm_component::build_phase(phase);
       tfp = new VerilatedFstSc;
+
+      if(!uvm::uvm_config_db<std::string>::get(this, "*", "uvmtest_name", uvmtest_name))
+       UVM_FATAL("NOTST", "Test name not in the config_db: " + get_full_name() + ".uvmtest_name");
+
+      Verilated::mkdir((uvmtest_name+"/").c_str());
     }
 
 
@@ -59,7 +67,7 @@ public:
 
         UVM_INFO(get_name()+"::"+__func__, "Tracing UUT into wave.fst", uvm::UVM_FULL);
         uut->trace(tfp, 99);
-        tfp->open("wave.fst");
+        tfp->open((uvmtest_name+"/wave.fst").c_str());
     }
 
     virtual void final_phase(uvm::uvm_phase& phase) { 
